@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarPuesto V1.0 — Prototipo de Diseño (Fase M2)</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+  :root {
+    --naranja: #f59e0b;
+    --naranja-osc: #d97706;
+    --amarillo: #fde047;
+    --verde: #16a34a;
+    --verde-osc: #15803d;
+    --fondo: #fff7e6;
+    --blanco: #ffffff;
+    --texto: #1f2937;
+    --gris: #6b7280;
+    --borde: #e5e7eb;
+    --rojo: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(160deg, var(--fondo) 0%, #fff3d6 100%);
+    color: var(--texto);
+    font-size: 18px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #fde68a; color: #78350f; }
+  ::-webkit-scrollbar { height: 10px; width: 10px; }
+  ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+  :focus-visible { outline: 3px solid rgba(245,158,11,.55); outline-offset: 2px; }
+
+  /* ====== Cabecera ====== */
+  header {
+    background: linear-gradient(90deg, var(--naranja-osc), var(--naranja));
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  header .sol { font-size: 34px; filter: drop-shadow(0 0 6px rgba(255,255,255,.6)); }
+  header h1 { font-size: 24px; font-weight: 700; letter-spacing: .5px; }
+  header .subtitulo { font-size: 13px; opacity: .9; }
+
+  nav {
+    background: var(--blanco);
+    border-bottom: 1px solid var(--borde);
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 16px;
+    gap: 4px;
+  }
+  nav button {
+    background: transparent;
+    border: none;
+    border-bottom: 4px solid transparent;
+    padding: 12px 18px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--gris);
+    cursor: pointer;
+  }
+  nav button:hover { color: var(--naranja-osc); }
+  nav button.activo { color: var(--naranja-osc); border-bottom-color: var(--naranja); }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  .pantalla { display: none; }
+  .pantalla.visible { display: block; animation: aparecer .25s ease; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+
+  h2 { font-size: 22px; color: var(--naranja-osc); margin-bottom: 16px; }
+  .aviso {
+    background: #fef3c7;
+    border-left: 5px solid var(--naranja);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 15px;
+    margin-bottom: 18px;
+  }
+
+  /* ====== Tarjetas ====== */
+  .tarjeta {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .tarjeta h3 { font-size: 17px; color: var(--verde-osc); margin-bottom: 10px; }
+
+  /* ====== Tabla de carga ====== */
+  .tabla-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--blanco);
+  }
+  th, td {
+    border: 1px solid var(--borde);
+    padding: 8px 9px;
+    text-align: left;
+    font-size: 15px;
+    vertical-align: middle;
+  }
+  th {
+    background: linear-gradient(180deg, #fef9ec, #fdf3d7);
+    color: var(--naranja-osc);
+    font-weight: 700;
+    font-size: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  tbody tr { transition: background .12s ease; }
+  tbody tr:nth-child(even) { background: #fcfaf5; }
+  tbody tr:hover { background: #fdf3d7; }
+  td input {
+    width: 100%;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 15px;
+    background: #f9fafb;
+    transition: border-color .12s, box-shadow .12s, background .12s;
+  }
+  td input:hover { border-color: #fdd08a; background: #fffdf7; }
+  td input:focus { outline: none; border-color: var(--naranja); box-shadow: 0 0 0 3px rgba(245,158,11,.15); background: #fff; }
+  td select {
+    width: 100%;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    padding: 6px 4px;
+    font-size: 14px;
+    background: #f9fafb;
+  }
+  td input.lectura { background: transparent; border: none; font-weight: 600; color: var(--texto); padding: 6px 0; }
+  td input.error { border-color: var(--rojo); background: #fef2f2; }
+  .uso-container { display: flex; gap: 6px; flex-wrap: wrap; }
+  .uso-container input.min_uso, .uso-container input.usos_dia, .uso-container input.horas_dia, .uso-container input.horas_conn { width: 46%; }
+  .uso-container input.ciclo { width: 30%; }
+  .celda-uso-total {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--verde-osc);
+    white-space: nowrap;
+  }
+  .celda-uso-total small { display: block; font-weight: 400; color: var(--gris); font-size: 12px; }
+
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s, background .12s, filter .12s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn-accion { font-size: 13px; padding: 6px 10px; color: #fff; }
+  .btn-eliminar { background: var(--rojo); }
+  .btn-primario {
+    background: linear-gradient(90deg, var(--verde), #22c55e);
+    color: #fff;
+    font-size: 18px;
+    padding: 14px 22px;
+    width: 100%;
+  }
+  .btn-primario:hover { box-shadow: 0 4px 12px rgba(22,163,74,.35); }
+  .btn-secundario { background: var(--blanco); color: var(--naranja-osc); border: 2px solid var(--naranja); }
+  .btn-ejemplo {
+    background: #f0fdf4;
+    color: var(--verde-osc);
+    border: 2px solid var(--verde);
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+  .btn-ejemplo:hover { background: #dcfce7; }
+  .btn-ejemplo.activo { background: var(--verde); color: #fff; }
+  .barra-botones { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .fila-botones { display: flex; gap: 6px; justify-content: flex-end; }
+
+  /* ====== Resultado ====== */
+  .grid-resultado {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .kpi { border-radius: 14px; padding: 16px; color: #fff; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,.12); border: 1px solid rgba(255,255,255,.18); }
+  .kpi .valor { font-size: 34px; font-weight: 800; line-height: 1.1; }
+  .kpi .etiqueta { font-size: 14px; opacity: .95; margin-top: 4px; }
+  .kpi-w { background: linear-gradient(135deg, #f59e0b, #ea580c); }
+  .kpi-wh { background: linear-gradient(135deg, #22c55e, #16a34a); }
+  .kpi-nocturno { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
+
+  #desglose table td.nombre-celda { font-weight: 600; }
+  .barra-pct {
+    display: inline-block;
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--naranja), var(--verde));
+    vertical-align: middle;
+    min-width: 2px;
+  }
+
+  .item-material {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fffdf6;
+  }
+  .item-material .icono { font-size: 26px; }
+  .item-material .nombre { font-weight: 700; }
+  .item-material .detalle { font-size: 14px; color: var(--gris); }
+  .item-material .valor { font-size: 18px; font-weight: 800; color: var(--verde-osc); text-align: right; }
+
+  .parametros { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .campo label { display: block; font-size: 14px; font-weight: 600; color: var(--gris); margin-bottom: 4px; }
+  .campo input {
+    width: 100%;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 17px;
+  }
+  .campo input:focus { outline: 2px solid var(--naranja); border-color: var(--naranja); }
+
+  /* ====== Guía ====== */
+  .casos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .caso {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-top: 6px solid var(--naranja);
+    border-radius: 14px;
+    padding: 16px;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  .caso:hover { box-shadow: 0 8px 20px rgba(0,0,0,.08); transform: translateY(-2px); }
+  .caso h4 { font-size: 17px; color: var(--naranja-osc); margin-bottom: 8px; }
+  .caso .componentes { margin-bottom: 10px; }
+  .caso .componentes span {
+    display: inline-block;
+    background: #fef9ec;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 13px;
+    margin: 2px;
+  }
+  .caso ol { padding-left: 20px; font-size: 15px; }
+  .caso ol li { margin-bottom: 4px; }
+  .caso .advertencia {
+    background: #fef2f2;
+    border-left: 4px solid var(--rojo);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .pie-demo { margin-top: 20px; text-align: center; font-size: 13px; color: var(--gris); }
+
+  /* ====== CAPA DE REDISENO PROFESIONAL (Fase M2) ====== */
+  body { letter-spacing: .1px; }
+
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #274a72 100%);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 3px solid var(--naranja);
+  }
+  header::after {
+    content: "";
+    position: absolute;
+    right: -80px; top: -80px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(245,158,11,.35), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  header .sol {
+    width: 54px; height: 54px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-radius: 14px;
+    box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4);
+    flex: 0 0 auto;
+  }
+  header h1 { font-size: 26px; letter-spacing: .4px; }
+  header .subtitulo { font-size: 13px; opacity: .85; letter-spacing: .2px; }
+  header .vers {
+    font-weight: 800; font-size: 14px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #78350f;
+    border-radius: 999px;
+    padding: 2px 12px;
+    display: inline-block;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+
+  nav {
+    background: #fff;
+    border-bottom: 1px solid var(--borde);
+    box-shadow: 0 2px 8px rgba(15,23,42,.06);
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 8px 16px;
+  }
+  nav button {
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 15px;
+    color: #475569;
+    background: transparent;
+  }
+  nav button:hover { background: #fef3c7; color: #78350f; }
+  nav button.activo {
+    background: linear-gradient(135deg, var(--verde), #15803d);
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(22,163,74,.3);
+  }
+  nav button.activo:hover { color: #fff; }
+
+  main { padding-top: 28px; }
+
+  .aviso {
+    background: #fff8e6;
+    border: 1px solid #fde68a;
+    border-left: 5px solid var(--naranja);
+  }
+
+  .tarjeta {
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.05);
+    background: #fff;
+  }
+
+  th, td { border-color: #e6eaf0; }
+  th {
+    background: #f8fafc;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-size: 12.5px;
+    border-bottom: 2px solid var(--naranja);
+  }
+  tbody tr:nth-child(even) { background: #fcfdfe; }
+  tbody tr:hover { background: #fff8e6; }
+  td input, td select {
+    border-color: #d7dde6;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+  td input:hover, td select:hover { border-color: #fbbf24; }
+  td input:focus, td select:focus {
+    outline: none;
+    border-color: var(--naranja);
+    box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+  }
+  td input.lectura { background: transparent; border: none; box-shadow: none; font-weight: 600; }
+
+  .btn { box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+  .btn-primario { border-radius: 12px; }
+  .btn-eliminar { border-radius: 999px; }
+
+  .kpi {
+    position: relative;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.16);
+    border: 1px solid rgba(255,255,255,.2);
+    overflow: hidden;
+    padding: 20px 16px 18px;
+  }
+  .kpi::before {
+    content: "";
+    position: absolute;
+    top: 12px; right: 14px;
+    font-size: 30px;
+    opacity: .55;
+  }
+  .kpi .valor { font-size: 40px; margin-top: 8px; }
+  .kpi .etiqueta { font-size: 13px; letter-spacing: .3px; font-weight: 600; }
+  .kpi-w::before { content: "\26A1"; }
+  .kpi-wh::before { content: "\1F506"; }
+  .kpi-nocturno::before { content: "\1F319"; }
+
+  #desglose table td.nombre-celda { font-weight: 600; color: #111827; }
+  .barra-pct { height: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,.08); }
+
+  .item-material {
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .item-material:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(15,23,42,.08); }
+  .item-material .icono {
+    width: 46px; height: 46px;
+    display: grid; place-items: center;
+    background: #fef3c7;
+    border-radius: 12px;
+    font-size: 24px;
+    flex: 0 0 auto;
+  }
+  .item-material .valor { color: var(--verde-osc); }
+
+  .campo label { text-transform: uppercase; letter-spacing: .4px; font-size: 12px; }
+  .campo input { border-color: #d7dde6; border-radius: 10px; background: #fff; }
+  .campo input:focus {
+    outline: none;
+    border-color: var(--naranja);
+    box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+  }
+
+  .caso {
+    border-color: #e6eaf0;
+    border-top-width: 5px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04);
+  }
+  .caso h4 { letter-spacing: .2px; }
+  .caso .componentes span { font-weight: 600; }
+
+  .pie-demo {
+    padding: 10px 0;
+    border-top: 1px solid #e6eaf0;
+    font-weight: 500;
+  }
+
+  @media print {
+    header, nav, .barra-botones, .btn, .aviso, .pie-demo { display: none !important; }
+    body { background: #fff; }
+    main { max-width: 100%; padding: 0; }
+    .pantalla { display: block !important; }
+    .tarjeta { border: none; box-shadow: none; }
+  }
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    nav { padding: 6px 8px; }
+    nav button { padding: 8px 12px; font-size: 14px; }
+    header h1 { font-size: 21px; }
+    header .vers { font-size: 13px; }
+    .kpi .valor { font-size: 32px; }
+    .grid-resultado { grid-template-columns: 1fr; }
+    .uso-container input { min-width: 58px; }
+    .parametros { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 15px; }
+    header { padding: 12px 14px; }
+    header .sol { width: 44px; height: 44px; }
+    .kpi .valor { font-size: 28px; }
+    .parametros { grid-template-columns: 1fr; }
+    nav button { font-size: 13px; padding: 7px 10px; }
+  }
+  @media print {
+    header, nav, .aviso, .barra-botones, .btn, .pie-demo { display: none !important; }
+    body { background: #fff; }
+    .kpi { box-shadow: none; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sol" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="4.2" fill="#b45309"/>
+      <g stroke="#b45309" stroke-width="1.8" stroke-linecap="round">
+        <line x1="12" y1="1.5" x2="12" y2="4"/>
+        <line x1="12" y1="20" x2="12" y2="22.5"/>
+        <line x1="1.5" y1="12" x2="4" y2="12"/>
+        <line x1="20" y1="12" x2="22.5" y2="12"/>
+        <line x1="4.3" y1="4.3" x2="6" y2="6"/>
+        <line x1="18" y1="18" x2="19.8" y2="19.8"/>
+        <line x1="4.3" y1="19.7" x2="6" y2="18"/>
+        <line x1="18" y1="6" x2="19.8" y2="4.2"/>
+      </g>
+    </svg>
+  </div>
+  <div>
+    <h1>SolarPuesto <span class="vers">V1.0</span></h1>
+    <div class="subtitulo">Calculadora de potencia y material para puestos de comercio informal</div>
+  </div>
+</header>
+
+<nav>
+  <button id="tab-carga" class="activo" onclick="mostrar('carga')">1. Carga de aparatos</button>
+  <button id="tab-resultado" onclick="mostrar('resultado')">2. Resultado</button>
+  <button id="tab-guia" onclick="mostrar('guia')">3. Guía de instalación</button>
+</nav>
+
+<main>
+  <!-- ================= PANTALLA 1: CARGA (CRUD) ================= -->
+  <section id="carga" class="pantalla visible">
+    <div class="aviso">
+      Agrega los elementos que usa <b>tu</b> negocio (licuadora, luces, nevera, celular…). Para cada uno elige su
+      <b>tipo de uso</b> y la app calcula el consumo acertado según cuánto lo usas:
+      <br>🔁 <b>Por usos</b> = veces que lo prendes · ⏱ <b>Continuo</b> = prendido toda la jornada · ❄️ <b>Refrigeración</b> = compresor con ciclo de trabajo.
+      La potencia real (W) es la que aparece en la etiqueta de cada aparato.
+    </div>
+
+    <div class="tarjeta">
+      <h3>&#127760; Ejemplos reales de puestos ambulantes</h3>
+      <div style="font-size:15px; color:var(--gris); margin-bottom:10px;">
+        Elige un tipo de puesto para cargar sus aparatos con valores reales. Puedes editar todo y agregar lo que use tu negocio.
+      </div>
+      <div class="barra-botones" id="ejemplos-bar"></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>&#128221; Tabla de carga de aparatos de tu puesto</h3>
+      <div style="font-size:14px; color:var(--gris); margin-bottom:10px;">
+        &#128161; Si un aparato está encendido toda la jornada (luces, radio, datáfono), usa el tipo <b>⏱ Continuo</b> y pon las horas que dura encendido.
+      También indica el <b>Horario</b> de cada aparato (☀️ día, 🌙 noche o ambos): la app garantiza que la batería cubra lo que se usa cuando no hay sol.
+      </div>
+      <div class="tabla-wrap">
+        <table id="tabla-carga">
+          <thead>
+            <tr>
+              <th style="width:19%">Aparato</th>
+              <th style="width:7%">Cant.</th>
+              <th style="width:12%">Potencia real (W)</th>
+              <th style="width:14%">Tipo de uso</th>
+              <th style="width:8%">Horario</th>
+              <th style="width:20%">Uso en la jornada</th>
+              <th style="width:13%">Uso total (auto)</th>
+              <th style="width:7%">Elim.</th>
+            </tr>
+          </thead>
+          <tbody id="filas-carga"></tbody>
+        </table>
+      </div>
+      <div class="barra-botones">
+        <button class="btn btn-secundario" onclick="agregarFila()">&#10133; Añadir aparato</button>
+        <button class="btn btn-primario" onclick="calcular()">&#128269; Calcular resultado</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PANTALLA 2: RESULTADO / REPORTE ================= -->
+  <section id="resultado" class="pantalla">
+    <div class="aviso">
+      Este es tu resultado: la energía que consume tu puesto por día y el material solar que necesitas.
+      <button class="btn btn-secundario" style="margin-left:8px; padding:4px 12px; font-size:14px;" onclick="window.print()">&#128424; Imprimir / PDF</button>
+    </div>
+
+    <div class="grid-resultado">
+      <div class="kpi kpi-w">
+        <div class="valor" id="kpi-w">0</div>
+        <div class="etiqueta">Potencia instalada (W)</div>
+      </div>
+      <div class="kpi kpi-wh">
+        <div class="valor" id="kpi-wh">0</div>
+        <div class="etiqueta">Energía diaria (Wh/día)</div>
+      </div>
+      <div class="kpi kpi-nocturno">
+        <div class="valor" id="kpi-nocturno">0</div>
+        <div class="etiqueta">Consumo nocturno — lo cubre la batería 🌙</div>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>&#128202; Desglose por aparato (según el uso real de tu jornada)</h3>
+      <div id="desglose"></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>&#9881;&#65039; Parámetros configurables</h3>
+      <div class="parametros">
+        <div class="campo">
+          <label for="p-hsp">Horas pico solar (HSP)</label>
+          <input id="p-hsp" type="number" step="0.1" min="1" max="8" value="4.5">
+        </div>
+        <div class="campo">
+          <label for="p-eff">Eficiencia del sistema</label>
+          <input id="p-eff" type="number" step="0.05" min="0.2" max="1" value="0.8">
+        </div>
+        <div class="campo">
+          <label for="p-margen">Margen de pérdidas (%)</label>
+          <input id="p-margen" type="number" step="5" min="0" max="100" value="25">
+        </div>
+        <div class="campo">
+          <label for="p-tension">Tensión batería (V)</label>
+          <input id="p-tension" type="number" step="1" min="12" max="48" value="12">
+        </div>
+        <div class="campo">
+          <label for="p-dod">Profundidad de descarga (%)</label>
+          <input id="p-dod" type="number" step="5" min="10" max="90" value="50">
+        </div>
+        <div class="campo">
+          <label for="p-panel">Potencia del panel (Wp)</label>
+          <input id="p-panel" type="number" step="10" min="50" max="550" value="450">
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-secundario" onclick="calcular()">&#128260; Recalcular</button>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <h3>&#128293; Dimensionamiento del sistema solar</h3>
+      <div id="lista-material"></div>
+    </div>
+  </section>
+
+  <!-- ================= PANTALLA 3: GUÍA ================= -->
+  <section id="guia" class="pantalla">
+    <div class="aviso">
+      Ejemplos por tipo de puesto, con los componentes que necesitas y cómo instalarlos y usarlos de forma segura.
+    </div>
+
+    <div class="casos">
+      <div class="caso">
+        <h4>1. Puesto de jugos 🥤</h4>
+        <div class="componentes"><span>Licuadora</span><span>Cuchillos</span><span>Nevera portátil*</span></div>
+        <div class="componentes" style="margin-top:6px;"><span>Panel 450W</span><span>Batería 12V</span><span>Inversor 1200W</span></div>
+        <ol>
+          <li>Coloca la licuadora solo con el inversor encendido.</li>
+          <li>Usa la licuadora a ráfagas (no continua) para ahorrar batería.</li>
+          <li>Carga el teléfono / datáfono en las horas sin uso.</li>
+          <li>Al cerrar, apaga el inversor y protege el panel.</li>
+        </ol>
+        <div class="advertencia">⚠ Si usa nevera, no conectes licuadora y nevera al mismo tiempo.</div>
+      </div>
+
+      <div class="caso">
+        <h4>2. Iluminación LED + celular/datáfono 📱</h4>
+        <div class="componentes"><span>Lámparas LED</span><span>Celular</span><span>Datáfono</span></div>
+        <div class="componentes" style="margin-top:6px;"><span>Panel 100–200W</span><span>Batería 12V</span><span>Inversor 300–600W</span></div>
+        <ol>
+          <li>Instala las lámparas LED sobre las áreas de atención.</li>
+          <li>Elige bombillos LED de bajo consumo (5–10 W).</li>
+          <li>Carga el datáfono durante el día con el panel.</li>
+          <li>Apaga luces de zonas sin ventas.</li>
+        </ol>
+      </div>
+
+      <div class="caso">
+        <h4>3. Alimentos con refrigerador pequeño ❄️</h4>
+        <div class="componentes"><span>Refrigerador</span><span>Iluminación LED</span></div>
+        <div class="componentes" style="margin-top:6px;"><span>Panel 500W+</span><span>Batería 200Ah</span><span>Inversor 1500W</span></div>
+        <ol>
+          <li>No abrir el refrigerador con frecuencia.</li>
+          <li>Regula el termostato a un valor medio.</li>
+          <li>Ubica el refrigerador en sombra.</li>
+        </ol>
+        <div class="advertencia">⚠ Alerta: el refrigerador es el mayor consumidor. Es importante dimensionarlo junto a los demás aparatos.</div>
+      </div>
+
+      <div class="caso">
+        <h4>4. Puesto mixto (licuadora + luces + datáfono) 🥤💡</h4>
+        <div class="componentes"><span>Licuadora</span><span>Lámparas LED</span><span>Datáfono</span></div>
+        <div class="componentes" style="margin-top:6px;"><span>Panel 450W</span><span>Batería 150Ah</span><span>Inversor 1200W</span></div>
+        <ol>
+          <li>Usa la licuadora por turnos cortos.</li>
+          <li>Mantén el datáfono conectado solo para cobrar.</li>
+          <li>Cerciúrate de que las luces sean LED.</li>
+        </ol>
+        <div class="advertencia">⚠ No exceder la capacidad del inversor combinando más de un equipo de alto consumo.</div>
+      </div>
+
+      <div class="caso">
+        <h4>5. Puesto de fritura (elemento de calor + ventilador) 🍟</h4>
+        <div class="componentes"><span>Fritadora</span><span>Ventilador</span><span>Iluminación</span></div>
+        <div class="componentes" style="margin-top:6px;"><span>Panel 600W+</span><span>Batería 200Ah</span><span>Inversor 2000W</span></div>
+        <ol>
+          <li>Ubica el panel y equipos lejos de aceite y agua.</li>
+          <li>Habilita el ventilador para extraer humo.</li>
+          <li>Revisa que los cables estén lejos de calor.</li>
+        </ol>
+        <div class="advertencia">⚠ Alto consumo de calor: evaluación con experto para el dimensionamiento.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="pie-demo">
+    Prototipo de diseño — Fase M2 · Acta de Reunión No. 003 · SolarPuesto V1.0
+  </div>
+</main>
+
+<script>
+  // ================= DATOS DE EJEMPLO (valores reales de puestos ambulantes) =================
+  const CASOS = [
+    { nombre: "🥤 Puesto de jugos",
+      filas: [
+        { nombre: "Licuadora (jugos)", cantidad: 1, potencia: 550, tipo: "usos", min: 2, usos: 55, horario: "dia" },
+        { nombre: "Lámpara LED", cantidad: 2, potencia: 10, tipo: "continuo", horas: 5, horario: "noche" },
+        { nombre: "Datáfono", cantidad: 1, potencia: 15, tipo: "continuo", horas: 3, horario: "dia" },
+        { nombre: "Celular (carga)", cantidad: 1, potencia: 10, tipo: "usos", min: 30, usos: 3, horario: "dia" },
+        { nombre: "Radio de música", cantidad: 1, potencia: 40, tipo: "continuo", horas: 6, horario: "ambos" }
+      ] },
+    { nombre: "📱 Luces LED + datáfono",
+      filas: [
+        { nombre: "Lámpara LED", cantidad: 4, potencia: 10, tipo: "continuo", horas: 5, horario: "noche" },
+        { nombre: "Tira LED", cantidad: 1, potencia: 20, tipo: "continuo", horas: 6, horario: "noche" },
+        { nombre: "Celular (carga)", cantidad: 1, potencia: 10, tipo: "usos", min: 30, usos: 6, horario: "dia" },
+        { nombre: "Datáfono", cantidad: 1, potencia: 15, tipo: "continuo", horas: 6, horario: "dia" },
+        { nombre: "Radio de música", cantidad: 1, potencia: 40, tipo: "continuo", horas: 8, horario: "ambos" }
+      ] },
+    { nombre: "❄️ Refrigerador pequeño",
+      filas: [
+        { nombre: "Refrigerador pequeño", cantidad: 1, potencia: 90, tipo: "refri", horasConectado: 12, ciclo: 35, horario: "ambos" },
+        { nombre: "Lámpara LED", cantidad: 2, potencia: 10, tipo: "continuo", horas: 6, horario: "noche" },
+        { nombre: "Datáfono", cantidad: 1, potencia: 15, tipo: "continuo", horas: 4, horario: "dia" }
+      ] },
+    { nombre: "🔀 Puesto mixto",
+      filas: [
+        { nombre: "Licuadora", cantidad: 1, potencia: 550, tipo: "usos", min: 2, usos: 50, horario: "dia" },
+        { nombre: "Lámpara LED", cantidad: 3, potencia: 10, tipo: "continuo", horas: 6, horario: "noche" },
+        { nombre: "Datáfono", cantidad: 1, potencia: 15, tipo: "continuo", horas: 5, horario: "dia" },
+        { nombre: "Celular (carga)", cantidad: 1, potencia: 10, tipo: "usos", min: 30, usos: 4, horario: "dia" },
+        { nombre: "Radio de música", cantidad: 1, potencia: 40, tipo: "continuo", horas: 7, horario: "ambos" }
+      ] },
+    { nombre: "🍟 Puesto de fritura",
+      filas: [
+        { nombre: "Fritadora / plancha", cantidad: 1, potencia: 1200, tipo: "usos", min: 3, usos: 40, horario: "dia" },
+        { nombre: "Ventilador extractor", cantidad: 1, potencia: 60, tipo: "continuo", horas: 5, horario: "dia" },
+        { nombre: "Lámpara LED", cantidad: 2, potencia: 10, tipo: "continuo", horas: 5, horario: "noche" },
+        { nombre: "Datáfono", cantidad: 1, potencia: 15, tipo: "continuo", horas: 3, horario: "dia" }
+      ] }
+  ];
+
+  // ================= RENDER DE FILAS =================
+  function htmlUso(tipo, f) {
+    f = f || {};
+    if (tipo === "usos") return `
+      <input class="min_uso" type="number" min="0" step="1" value="${f.min !== undefined ? f.min : ""}" placeholder="Min por uso" oninput="actualizarUsoTotal(this)">
+      <input class="usos_dia" type="number" min="1" step="1" value="${f.usos !== undefined ? f.usos : ""}" placeholder="Usos/día" oninput="actualizarUsoTotal(this)">`;
+    if (tipo === "continuo") return `
+      <input class="horas_dia" type="number" min="0" max="24" step="0.5" value="${f.horas !== undefined ? f.horas : ""}" placeholder="Horas encendido/día" oninput="actualizarUsoTotal(this)">`;
+    return `
+      <input class="horas_conn" type="number" min="0" max="24" step="0.5" value="${f.horasConectado !== undefined ? f.horasConectado : ""}" placeholder="H conectado" oninput="actualizarUsoTotal(this)">
+      <input class="ciclo" type="number" min="20" max="60" step="5" value="${f.ciclo !== undefined ? f.ciclo : ""}" placeholder="Ciclo %" oninput="actualizarUsoTotal(this)">`;
+  }
+
+  function pintarFila(fila) {
+    const tbody = document.getElementById("filas-carga");
+    const tr = document.createElement("tr");
+    tr.dataset.id = fila.id;
+    tr.innerHTML = `
+      <td><input class="lectura nombre" value="${escapeHtml(fila.nombre || "")}" placeholder="Ej: Licuadora" oninput="actualizarUsoTotal(this)"></td>
+      <td><input class="lectura cantidad" type="number" min="1" step="1" value="${fila.cantidad !== undefined ? fila.cantidad : ""}" oninput="actualizarUsoTotal(this)"></td>
+      <td><input class="lectura potencia" type="number" min="0" step="0.1" value="${fila.potencia !== undefined ? fila.potencia : ""}" placeholder="W real" oninput="actualizarUsoTotal(this)"></td>
+      <td>
+        <select class="tipo" onchange="cambiarTipo(this)">
+          <option value="usos" ${fila.tipo === "usos" ? "selected" : ""}>&#128257;&#65039; Por usos</option>
+          <option value="continuo" ${fila.tipo === "continuo" ? "selected" : ""}>&#9201;&#65039; Continuo</option>
+          <option value="refri" ${fila.tipo === "refri" ? "selected" : ""}>&#10052;&#65039; Refrigeración</option>
+        </select>
+      </td>
+      <td>
+        <select class="horario" onchange="actualizarUsoTotal(this)">
+          <option value="dia" ${fila.horario === "dia" || !fila.horario ? "selected" : ""}>&#9728;&#65039; Día</option>
+          <option value="noche" ${fila.horario === "noche" ? "selected" : ""}>&#127769;&#65039; Noche</option>
+          <option value="ambos" ${fila.horario === "ambos" ? "selected" : ""}>&#127751; Ambos</option>
+        </select>
+      </td>
+      <td><div class="uso-container">${htmlUso(fila.tipo || "usos", fila)}</div></td>
+      <td class="celda-uso-total">—</td>
+      <td>
+        <div class="fila-botones">
+          <button class="btn btn-accion btn-eliminar" onclick="eliminarFila(this)">&#128465;</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+    actualizarUsoTotal(tr);
+  }
+
+  function cambiarTipo(sel) {
+    const tr = sel.closest("tr");
+    const tipo = sel.value;
+    const actual = tr.querySelector(".uso-container");
+    actual.innerHTML = htmlUso(tipo);
+    actualizarUsoTotal(tr);
+  }
+
+  function agregarFila() {
+    pintarFila({ id: Date.now() + Math.random(), tipo: "usos" });
+    document.querySelector("#filas-carga tr:last-child .nombre").focus();
+  }
+
+  function eliminarFila(boton) {
+    const tr = boton.closest("tr");
+    if (!confirm("¿Eliminar este aparato?")) return;
+    tr.remove();
+  }
+
+  // ================= CÁLCULO DE USO EN VIVO =================
+  function formatoHoras(h) {
+    if (!(h > 0)) return "—";
+    const totalMin = Math.round(h * 60);
+    const hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    if (hh === 0) return mm + " min/día";
+    if (mm === 0) return hh + " h/día";
+    return hh + " h " + mm + " min/día";
+  }
+
+  function iconoHorario(h) {
+    return h === "noche" ? "🌙" : (h === "ambos" ? "🌗" : "☀️");
+  }
+
+  function horasDeFila(tr) {
+    const tipo = tr.querySelector(".tipo").value;
+    const cant = parseFloat(tr.querySelector(".cantidad").value) || 0;
+    if (tipo === "usos") {
+      const min = parseFloat(tr.querySelector(".min_uso").value) || 0;
+      const usos = parseFloat(tr.querySelector(".usos_dia").value) || 0;
+      return (min * usos * cant) / 60;
+    }
+    if (tipo === "continuo") {
+      return parseFloat(tr.querySelector(".horas_dia").value) || 0;
+    }
+    const hc = parseFloat(tr.querySelector(".horas_conn").value) || 0;
+    const ci = parseFloat(tr.querySelector(".ciclo").value);
+    return hc * ((isNaN(ci) ? 0 : ci) / 100);
+  }
+
+  function actualizarUsoTotal(elem) {
+    const tr = (elem && elem.tagName === "INPUT") ? elem.closest("tr") : elem;
+    if (!tr) return;
+    const horas = horasDeFila(tr);
+    const p = parseFloat(tr.querySelector(".potencia").value) || 0;
+    const wh = p * horas;
+    const celda = tr.querySelector(".celda-uso-total");
+    const tipo = tr.querySelector(".tipo").value;
+    const horario = tr.querySelector(".horario") ? tr.querySelector(".horario").value : "dia";
+    let detalle = "";
+    if (tipo === "usos") {
+      const min = tr.querySelector(".min_uso").value || "?";
+      const usos = tr.querySelector(".usos_dia").value || "?";
+      detalle = min + " min × " + usos + " usos";
+    } else if (tipo === "refri") {
+      const hc = tr.querySelector(".horas_conn").value || "?";
+      const ci = tr.querySelector(".ciclo").value || "?";
+      detalle = hc + " h × " + ci + "%";
+    }
+    const iconoHorario = horario === "noche" ? "🌙 " : (horario === "ambos" ? "🌗 " : "☀️ ");
+    if (horas > 0) {
+      celda.innerHTML = iconoHorario + formatoHoras(horas) +
+        (detalle ? "<small>" + (tipo === "continuo" ? "encendido" : detalle) + "</small>" : "") +
+        (wh > 0 ? "<small>≈ " + formatear(wh) + " Wh/día</small>" : "");
+    } else {
+      celda.innerHTML = "—";
+    }
+  }
+
+  // ================= LECTURA + VALIDACIÓN =================
+  function leerFilas() {
+    const registros = [];
+    const nombresVistos = new Set();
+    const tbody = document.getElementById("filas-carga");
+    let hayError = false;
+
+    tbody.querySelectorAll("tr").forEach(tr => {
+      const nombre = tr.querySelector(".nombre");
+      const cantidad = tr.querySelector(".cantidad");
+      const potencia = tr.querySelector(".potencia");
+      const inputs = [nombre, cantidad, potencia, ...tr.querySelectorAll(".uso-container input")];
+      inputs.forEach(c => c.classList.remove("error"));
+      const errores = [];
+
+      const nombreV = nombre.value.trim();
+      if (!nombreV) errores.push(nombre);
+      else if (nombresVistos.has(nombreV.toLowerCase())) {
+        errores.push(nombre);
+        alert("El aparato '" + nombreV + "' está repetido. El nombre debe ser único.");
+      } else {
+        nombresVistos.add(nombreV.toLowerCase());
+      }
+
+      const c = parseFloat(cantidad.value);
+      const p = parseFloat(potencia.value);
+      if (!(c >= 1) || c % 1 !== 0) errores.push(cantidad);
+      if (!(p > 0)) errores.push(potencia);
+
+      const tipo = tr.querySelector(".tipo").value;
+      const horario = tr.querySelector(".horario") ? tr.querySelector(".horario").value : "dia";
+      let horasLinea = 0;
+      let detalle = "";
+
+      if (tipo === "usos") {
+        const min = tr.querySelector(".min_uso");
+        const usos = tr.querySelector(".usos_dia");
+        const mv = parseFloat(min.value), uv = parseFloat(usos.value);
+        if (!(mv > 0)) errores.push(min);
+        if (!(uv >= 1) || uv % 1 !== 0) errores.push(usos);
+        if (mv > 0 && uv >= 1) {
+          horasLinea = (mv * uv * c) / 60;
+          detalle = mv + " min × " + uv + " usos/día";
+          if (horasLinea > 24) { errores.push(min); errores.push(usos); }
+        }
+      } else if (tipo === "continuo") {
+        const horas = tr.querySelector(".horas_dia");
+        const hv = parseFloat(horas.value);
+        if (!(hv > 0 && hv <= 24)) errores.push(horas);
+        horasLinea = hv;
+      } else {
+        const hc = tr.querySelector(".horas_conn");
+        const ci = tr.querySelector(".ciclo");
+        const hcv = parseFloat(hc.value), civ = parseFloat(ci.value);
+        if (!(hcv > 0 && hcv <= 24)) errores.push(hc);
+        if (!(civ >= 20 && civ <= 60)) errores.push(ci);
+        if (hcv > 0 && civ >= 20 && civ <= 60) {
+          horasLinea = hcv * (civ / 100);
+          detalle = hcv + " h conectado × " + civ + "% ciclo";
+        }
+      }
+
+      if (errores.length) {
+        hayError = true;
+        errores.forEach(e => e.classList.add("error"));
+      } else {
+        registros.push({
+          nombre: nombreV,
+          cantidad: c,
+          potencia: p,
+          potenciaTotal: p * c,
+          horasLinea: horasLinea,
+          energiaWh: p * c * horasLinea,
+          tipo: tipo,
+          horario: horario,
+          detalle: detalle
+        });
+      }
+    });
+
+    return { registros, hayError };
+  }
+
+  // ================= CÁLCULO =================
+  function calcular() {
+    const { registros, hayError } = leerFilas();
+    if (hayError) {
+      alert("Revisa los campos marcados en rojo. Recuerda: nombre único, cantidad ≥ 1, potencia > 0 W, y según el tipo: min>0 y usos≥1, horas 0–24, ciclo 20–60%. Ningún elemento puede superar 24 h/día.");
+      return;
+    }
+
+    const totalWh = registros.reduce((s, f) => s + f.energiaWh, 0);
+    const totalW = registros.reduce((s, f) => s + f.potenciaTotal, 0);
+    const pico = Math.max(0, ...registros.map(f => f.potenciaTotal));
+    const nocturnoWh = registros
+      .filter(f => f.horario === "noche" || f.horario === "ambos")
+      .reduce((s, f) => s + f.energiaWh, 0);
+
+    document.getElementById("kpi-w").textContent = formatear(totalW);
+    document.getElementById("kpi-wh").textContent = formatear(totalWh);
+    document.getElementById("kpi-nocturno").textContent = formatear(nocturnoWh);
+
+    // Desglose por aparato
+    const dBody = registros.map(f => {
+      const pct = totalWh > 0 ? (f.energiaWh / totalWh) * 100 : 0;
+      return `<tr>
+        <td class="nombre-celda">${escapeHtml(f.nombre)}</td>
+        <td>${formatear(f.potenciaTotal)} W</td>
+        <td>${formatoHoras(f.horasLinea)}${f.detalle ? "<br><small style='color:var(--gris)'>" + escapeHtml(f.detalle) + "</small>" : ""}</td>
+        <td>${iconoHorario(f.horario)} ${formatear(f.energiaWh)} Wh</td>
+        <td>
+          <span class="barra-pct" style="width:${Math.max(2, pct * 2)}px"></span>
+          ${pct.toFixed(0)}%
+        </td>
+      </tr>`;
+    }).join("");
+
+    document.getElementById("desglose").innerHTML =
+      registros.length === 0
+        ? `<div style="color:var(--gris)">Agrega aparatos en la pestaña 1 para ver el desglose.</div>`
+        : `<table>
+            <thead><tr>
+              <th style="width:34%">Aparato</th>
+              <th style="width:16%">Potencia total</th>
+              <th style="width:22%">Uso real / día</th>
+              <th style="width:16%">Energía / día</th>
+              <th style="width:12%">% del total</th>
+            </tr></thead>
+            <tbody>${dBody}</tbody>
+          </table>`;
+
+    const hsp = parseFloat(document.getElementById("p-hsp").value) || 4.5;
+    const eff = parseFloat(document.getElementById("p-eff").value) || 0.8;
+    const margen = (parseFloat(document.getElementById("p-margen").value) || 25) / 100;
+    const tension = parseFloat(document.getElementById("p-tension").value) || 12;
+    const dod = (parseFloat(document.getElementById("p-dod").value) || 50) / 100;
+    const ppanel = parseFloat(document.getElementById("p-panel").value) || 450;
+
+    const wp = (totalWh / hsp) * (1 / eff) * (1 + margen);
+    const nPaneles = Math.ceil(wp / ppanel);
+    const ah = (totalWh * (1 + margen)) / (tension * dod);
+    const watInversor = pico * 1.25 || totalW * 1.25;
+
+    const lista = [
+      { icono: "🔆", nombre: "Paneles fotovoltaicos",
+        detalle: ppanel + " Wp · requerido " + Math.round(wp) + " Wp · HSP " + hsp + " (recargan la batería de día)",
+        valor: nPaneles + " panel(es)" },
+      { icono: "🔋", nombre: "Banco de baterías",
+        detalle: tension + " V · DOD " + Math.round(dod * 100) + "%" + (nocturnoWh > 0 ? " · cubre 🌙 " + formatear(nocturnoWh) + " Wh de noche" : ""),
+        valor: Math.round(ah) + " Ah" },
+      { icono: "⚡", nombre: "Inversor",
+        detalle: "margen 25% de arranque sobre pico " + formatear(pico) + " W",
+        valor: "≥ " + Math.ceil(watInversor) + " W" }
+    ];
+
+    document.getElementById("lista-material").innerHTML =
+      lista.map(i => `
+        <div class="item-material">
+          <div class="icono">${i.icono}</div>
+          <div>
+            <div class="nombre">${i.nombre}</div>
+            <div class="detalle">${i.detalle}</div>
+          </div>
+          <div class="valor">${i.valor}</div>
+        </div>`).join("") +
+      (registros.length === 0 ? `<div class="aviso">Agrega aparatos en la pestaña 1 para ver el dimensionamiento.</div>` :
+        `<div style="background:#f0fdf4; border-left:5px solid var(--verde); padding:10px 14px; border-radius:6px; font-size:15px; margin-top:14px;">
+          &#9989; <b>Garantía:</b> el inversor (≥ ${Math.ceil(watInversor)} W) cubre tu potencia pico de ${formatear(pico)} W
+          (todo encendido a la vez). La batería cubre los ${formatear(totalWh)} Wh/día —incluidos los ${formatear(nocturnoWh)} Wh que se usan
+          <b>sin sol</b> (🌙)— con margen del 25% y DOD. Los paneles la recargan dentro de las ${hsp} h de sol pico de la zona.
+          El dimensionamiento se calculó con el <b>uso real</b> de cada elemento. Si cambia el uso, recalcula.
+        </div>`);
+
+    mostrar("resultado");
+  }
+
+  // ================= CARGA DE EJEMPLOS =================
+  function cargarFila(datos) {
+    pintarFila(Object.assign({ id: Date.now() + Math.random() }, datos));
+  }
+
+  function cargarEjemplo(indice, silencioso) {
+    const tbody = document.getElementById("filas-carga");
+    if (tbody.children.length && !silencioso &&
+        !confirm("¿Reemplazar los aparatos actuales por el ejemplo '" + CASOS[indice].nombre + "'?")) return;
+    tbody.innerHTML = "";
+    CASOS[indice].filas.forEach(d => cargarFila(Object.assign({}, d)));
+    document.querySelectorAll("#ejemplos-bar button").forEach((b, i) => b.classList.toggle("activo", i === indice));
+  }
+
+  CASOS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.className = "btn btn-ejemplo";
+    b.textContent = c.nombre;
+    b.onclick = () => cargarEjemplo(i);
+    document.getElementById("ejemplos-bar").appendChild(b);
+  });
+
+  // ================= NAVEGACIÓN Y FORMATO =================
+  function mostrar(nombrePantalla) {
+    document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("visible"));
+    document.getElementById(nombrePantalla).classList.add("visible");
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("activo"));
+    document.getElementById("tab-" + nombrePantalla).classList.add("activo");
+    window.scrollTo({ top: 0 });
+  }
+
+  function formatear(n) {
+    return Math.round(n).toLocaleString("es-CO");
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // ================= INICIO =================
+  cargarEjemplo(3, true);
+</script>
+
+</body>
+</html>
