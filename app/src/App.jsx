@@ -3,6 +3,9 @@ import { dimensionar, horasDeUso, formatoHoras, DEFAULTS } from "./lib/formulas.
 import { CASOS } from "./lib/casos.js";
 import { validarTabla } from "./lib/validaciones.js";
 import { cargar, guardar, vaciar } from "./lib/almacen.js";
+import GuiaManual from "./components/GuiaManual.jsx";
+import Presupuesto from "./components/Presupuesto.jsx";
+import Inicio from "./components/Inicio.jsx";
 
 const siguienteId = (lista) => lista.reduce((m, a) => Math.max(m, Number(a.id) || 0), 0) + 1;
 
@@ -20,69 +23,10 @@ const nuevoAparato = (id) => ({
   ciclo: ""
 });
 
-const GUIA = [
-  {
-    titulo: "1. Puesto de jugos 🥤",
-    componentes: ["Licuadora", "Cuchillos", "Nevera portátil*"],
-    equipos: ["Panel 450W", "Batería 12V", "Inversor 1200W"],
-    pasos: [
-      "Coloca la licuadora solo con el inversor encendido.",
-      "Usa la licuadora a ráfagas (no continua) para ahorrar batería.",
-      "Carga el teléfono / datáfono en las horas sin uso.",
-      "Al cerrar, apaga el inversor y protege el panel."
-    ],
-    advertencia: "⚠ Si usa nevera, no conectes licuadora y nevera al mismo tiempo."
-  },
-  {
-    titulo: "2. Iluminación LED + celular/datáfono 📱",
-    componentes: ["Lámparas LED", "Celular", "Datáfono"],
-    equipos: ["Panel 100–200W", "Batería 12V", "Inversor 300–600W"],
-    pasos: [
-      "Instala las lámparas LED sobre las áreas de atención.",
-      "Elige bombillos LED de bajo consumo (5–10 W).",
-      "Carga el datáfono durante el día con el panel.",
-      "Apaga luces de zonas sin ventas."
-    ]
-  },
-  {
-    titulo: "3. Alimentos con refrigerador pequeño ❄️",
-    componentes: ["Refrigerador", "Iluminación LED"],
-    equipos: ["Panel 500W+", "Batería 200Ah", "Inversor 1500W"],
-    pasos: [
-      "No abrir el refrigerador con frecuencia.",
-      "Regula el termostato a un valor medio.",
-      "Ubica el refrigerador en sombra."
-    ],
-    advertencia: "⚠ Alerta: el refrigerador es el mayor consumidor. Es importante dimensionarlo junto a los demás aparatos."
-  },
-  {
-    titulo: "4. Puesto mixto (licuadora + luces + datáfono) 🥤💡",
-    componentes: ["Licuadora", "Lámparas LED", "Datáfono"],
-    equipos: ["Panel 450W", "Batería 150Ah", "Inversor 1200W"],
-    pasos: [
-      "Usa la licuadora por turnos cortos.",
-      "Mantén el datáfono conectado solo para cobrar.",
-      "Cerciórate de que las luces sean LED."
-    ],
-    advertencia: "⚠ No exceder la capacidad del inversor combinando más de un equipo de alto consumo."
-  },
-  {
-    titulo: "5. Puesto de fritura (elemento de calor + ventilador) 🍟",
-    componentes: ["Fritadora", "Ventilador", "Iluminación"],
-    equipos: ["Panel 600W+", "Batería 200Ah", "Inversor 2000W"],
-    pasos: [
-      "Ubica el panel y equipos lejos de aceite y agua.",
-      "Habilita el ventilador para extraer humo.",
-      "Revisa que los cables estén lejos de calor."
-    ],
-    advertencia: "⚠ Alto consumo de calor: evaluación con experto para el dimensionamiento."
-  }
-];
-
 const iconoHorario = (h) => (h === "noche" ? "🌙 " : h === "ambos" ? "🌗 " : "☀️ ");
 
 function App() {
-  const [tab, setTab] = useState("carga");
+  const [tab, setTab] = useState("inicio");
   // RFN-05: la tabla de carga y los parametros se recuperan del navegador.
   const [guardado] = useState(() => cargar());
   const [aparatos, setAparatos] = useState(guardado ? guardado.aparatos : []);
@@ -160,12 +104,16 @@ function App() {
       </header>
 
       <nav>
+        <button className={tab === "inicio" ? "activo" : ""} onClick={() => setTab("inicio")}>Inicio</button>
         <button className={tab === "carga" ? "activo" : ""} onClick={() => setTab("carga")}>1. Carga de aparatos</button>
         <button className={tab === "resultado" ? "activo" : ""} onClick={() => setTab("resultado")}>2. Resultado</button>
         <button className={tab === "guia" ? "activo" : ""} onClick={() => setTab("guia")}>3. Guía de instalación</button>
+        <button className={tab === "presupuesto" ? "activo" : ""} onClick={() => setTab("presupuesto")}>4. Presupuesto</button>
       </nav>
 
       <main>
+        {tab === "inicio" && <Inicio onIr={setTab} />}
+
         {tab === "carga" && (
           <>
             <div className="aviso">
@@ -314,6 +262,7 @@ function App() {
                 <Campo label="Tensión batería (V)" valor={params.tension} paso="1" min="12" max="48" onChange={(v) => setParam("tension", v)} />
                 <Campo label="Profundidad de descarga (%)" valor={params.dod * 100} paso="5" min="10" max="90" onChange={(v) => setParam("dod", v / 100)} />
                 <Campo label="Potencia del panel (Wp)" valor={params.ppanel} paso="10" min="50" max="550" onChange={(v) => setParam("ppanel", v)} />
+                <Campo label="Voltaje de trabajo del panel (V)" valor={params.vpanel} paso="1" min="12" max="48" onChange={(v) => setParam("vpanel", v)} />
               </div>
               <div className="barra-botones">
                 <button className="btn btn-secundario" onClick={() => setTab("carga")}>↩ Volver a la carga</button>
@@ -325,7 +274,7 @@ function App() {
               {cargado ? (
                 <>
                   <Material icono="🔆" nombre="Paneles fotovoltaicos"
-                    detalle={`${params.ppanel} Wp · requerido ${Math.round(datos.wp)} Wp · HSP ${params.hsp} (recargan la batería de día)`}
+                    detalle={`${params.ppanel} Wp · ${datos.vpanel} V de trabajo · requerido ${Math.round(datos.wp)} Wp · HSP ${params.hsp} (recargan la batería de día)`}
                     valor={`${datos.nPaneles} panel(es)`} />
                   <Material icono="🔋" nombre="Banco de baterías"
                     detalle={`${params.tension} V · DOD ${Math.round(params.dod * 100)}%${datos.nocturnoWh > 0 ? ` · cubre 🌙 ${datos.nocturnoWh.toLocaleString("es")} Wh de noche` : ""}`}
@@ -333,6 +282,9 @@ function App() {
                   <Material icono="⚡" nombre="Inversor"
                     detalle={`margen 25% de arranque sobre pico ${datos.pico.toLocaleString("es")} W`}
                     valor={`≥ ${Math.ceil(datos.watInversor)} W`} />
+                  <Material icono="🎛️" nombre="Controlador de carga"
+                    detalle={`regula la entrada del panel a ${params.tension} V y protege la batería de la sobrecarga (arreglo de ${datos.potenciaArreglo} W)`}
+                    valor={`≥ ${datos.ampControlador} A`} />
                   <div className="garantia">
                     ✅ <b>Garantía:</b> el inversor (≥ {Math.ceil(datos.watInversor)} W) cubre tu potencia pico de {datos.pico.toLocaleString("es")} W
                     (todo encendido a la vez). La batería cubre los {datos.totalWh.toLocaleString("es")} Wh/día —incluidos los {datos.nocturnoWh.toLocaleString("es")} Wh que se usan
@@ -347,34 +299,12 @@ function App() {
           </>
         )}
 
-        {tab === "guia" && (
-          <>
-            <div className="aviso">
-              Ejemplos por tipo de puesto, con los componentes que necesitas y cómo instalarlos y usarlos de forma segura.
-            </div>
-            <div className="casos">
-              {GUIA.map((c) => (
-                <article className="caso" key={c.titulo}>
-                  <h4>{c.titulo}</h4>
-                  <div className="componentes">
-                    {c.componentes.map((x) => <span key={x}>{x}</span>)}
-                  </div>
-                  <div className="componentes">
-                    {c.equipos.map((x) => <span key={x}>{x}</span>)}
-                  </div>
-                  <ol>
-                    {c.pasos.map((p) => <li key={p}>{p}</li>)}
-                  </ol>
-                  {c.advertencia && <div className="advertencia">{c.advertencia}</div>}
-                </article>
-              ))}
-            </div>
-          </>
-        )}
+        {tab === "guia" && <GuiaManual datos={datos} cargado={true} />}
+        {tab === "presupuesto" && <Presupuesto datos={datos} cargado={cargado && validacion.ok} />}
       </main>
 
       <footer className="pie-demo">
-        Fase 3 · Desarrollo (MVP) — Hito M3 · Acta de Reunión No. 004 · SolarPuesto V1.0
+        Fase 3 · Desarrollo (MVP) — Hito M3 · Acta de Reunión No. 006 · SolarPuesto V1.0
       </footer>
     </div>
   );
@@ -382,7 +312,8 @@ function App() {
 
 function FilaClave({ a, errores = {}, onChange, onEliminar }) {
   const horas = horasDeUso(a);
-  const wh = (parseFloat(a.potencia) || 0) * horas;
+  const cant = parseInt(a.cantidad, 10) || 0;
+  const wh = (parseFloat(a.potencia) || 0) * cant * horas;
   // clase "error" + title con el mensaje: el campo se marca en rojo al instante.
   const cls = (campo, base) => (errores[campo] ? `${base} error` : base);
   const title = (campo) => (errores[campo] ? { title: errores[campo] } : {});
@@ -423,7 +354,7 @@ function FilaClave({ a, errores = {}, onChange, onEliminar }) {
       <td className={errores.uso ? "celda-uso-total error" : "celda-uso-total"} title={errores.uso || ""}>
         {horas > 0 ? (<>
           {iconoHorario(a.horario)}{formatoHoras(horas)}
-          <small>{a.tipo === "continuo" ? "encendido" : a.tipo === "usos" ? `${a.min || "?"} min × ${a.usos || "?"} usos` : `${a.horasConectado || "?"} h × ${a.ciclo || "?"}%`}</small>
+          <small>{a.tipo === "continuo" ? "encendido" : a.tipo === "usos" ? `${a.min || "?"} min × ${a.usos || "?"} usos` : `${a.horasConectado || "?"} h × ${a.ciclo || "?"}%`}{cant > 1 ? ` · por unidad (× ${cant})` : ""}</small>
           {wh > 0 && <small>≈ {(wh).toLocaleString("es")} Wh/día</small>}
         </>) : "—"}
       </td>

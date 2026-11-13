@@ -69,6 +69,33 @@ describe("saneamiento de datos", () => {
   });
 });
 
+describe("migracion de parametros (Acta No. 005 · D-07)", () => {
+  it("un estado guardado con la especificacion anterior re-siembra la tension a 24 V", () => {
+    // Estado como quedo antes de la correccion: 12 V y otros parametros del usuario.
+    localStorage.setItem(
+      CLAVE,
+      JSON.stringify({ version: 1, paramsVersion: 1, aparatos: filas, params: { hsp: 5, tension: 12 } })
+    );
+    const r = cargar();
+    expect(r.params.tension).toBe(24);
+    // El resto de la configuracion del usuario se respeta.
+    expect(r.params.hsp).toBe(5);
+    // Y la tabla de carga no se pierde.
+    expect(r.aparatos).toHaveLength(1);
+    expect(r.aparatos[0].nombre).toBe("Licuadora");
+  });
+
+  it("un estado sin version de parametros tambien se migra", () => {
+    localStorage.setItem(CLAVE, JSON.stringify({ version: 1, aparatos: filas, params: { tension: 12 } }));
+    expect(cargar().params.tension).toBe(24);
+  });
+
+  it("un estado ya migrado respeta la tension que el usuario elija", () => {
+    guardar(filas, { ...DEFAULTS, tension: 48 });
+    expect(cargar().params.tension).toBe(48);
+  });
+});
+
 describe("JSON corrupto", () => {
   it("no revienta: devuelve null y se puede volver a guardar", () => {
     localStorage.setItem(CLAVE, "{esto no es json");

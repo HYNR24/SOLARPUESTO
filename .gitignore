@@ -17,5 +17,8 @@ Thumbs.db
 *.suo
 
 # Archivos de Office temporales (documentos abiertos)
-~$*.docx
-~$*.xlsx
+~$*
+
+# Pruebas visuales (Playwright) y temporales de Vitest
+Evidencias_Playwright/
+app/vitest-ui.*

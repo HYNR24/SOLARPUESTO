@@ -6,6 +6,15 @@ import { DEFAULTS } from "./formulas.js";
 
 export const CLAVE = "solarpuesto:v1";
 
+// Los valores por defecto de los parametros cambiaron en el Acta No. 005:
+// la tension del banco paso de 12 V a 24 V (D-07), porque un panel de 450 Wp
+// es nominal de 24 V y no alimenta un banco de 12 V sin convertidor.
+// Un 12 V guardado pertenece a la especificacion anterior, asi que al detectar
+// un estado viejo se re-siembra SOLO ese parametro. El resto de la
+// configuracion del usuario y toda su tabla de carga se conservan.
+export const PARAMETROS_VERSION = 2;
+const RE_SIEMBRAR = { tension: DEFAULTS.tension };
+
 const TIPOS = ["usos", "continuo", "refri"];
 const HORARIOS = ["dia", "noche", "ambos"];
 
@@ -66,7 +75,11 @@ export function cargar() {
     if (!datos || typeof datos !== "object") return null;
     const aparatos = sanearAparatos(datos.aparatos);
     if (aparatos.length === 0 && !datos.params) return null;
-    return { aparatos, params: sanearParametros(datos.params) };
+    const params = sanearParametros(datos.params);
+    if (datos.paramsVersion !== PARAMETROS_VERSION) {
+      for (const [k, v] of Object.entries(RE_SIEMBRAR)) params[k] = v;
+    }
+    return { aparatos, params };
   } catch {
     return null; // JSON corrupto: se ignora y se empieza limpio
   }
@@ -77,7 +90,7 @@ export function guardar(aparatos, params) {
   const s = almacenamiento();
   if (!s) return false;
   try {
-    s.setItem(CLAVE, JSON.stringify({ version: 1, aparatos, params }));
+    s.setItem(CLAVE, JSON.stringify({ version: 1, paramsVersion: PARAMETROS_VERSION, aparatos, params }));
     return true;
   } catch {
     return false; // cuota excedida o almacenamiento bloqueado

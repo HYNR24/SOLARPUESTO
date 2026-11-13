@@ -59,8 +59,10 @@
 | **CAPTURA 2-A** | Los tres KPIs completos arriba y la tabla «📊 Desglose por aparato» con la participación en % de cada elemento |
 | 5 | Señala en la captura que la licuadora aporta el mayor porcentaje: es la app la que prioriza el consumo real, no la potencia nominal |
 
-**Valores esperados** (para que puedas compararlos con los del Modelado Matemático):
-`657 W` instalados · `1 408 Wh/día` · `340 Wh` nocturnos.
+**Valores reales medidos en la aplicación** (contrastados con `dimensionar()` el 25/09/2026):
+`635 W` instalados · `1 408,33 Wh/día` · `340 Wh` nocturnos.
+
+> ⚠ **Discrepancia con el Modelado Matemático §6:** ese documento esperaba `657 W` instalados. La suma directa de las potencias de etiqueta del caso da `635 W` (550 + 20 + 15 + 10 + 40), de modo que el valor correcto es el de la aplicación y el error está en la tabla del documento de diseño. La diferencia y el resto de casos están detallados en `Evidencias_Capturas_Acta_004.docx` §3, hallazgo **H-02**.
 
 > ⚠ **Importante:** captura este compromiso con **`cantidad = 1`** en todas las filas (como viene el ejemplo). Existe un riesgo técnico documentado en `Matriz_Cumplimiento_Acta_004.md` §5.1: con 2 o más unidades del tipo *Por usos* la energía se duplica. **No pongas cantidad 2 en esta captura.**
 
